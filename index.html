@@ -1150,7 +1150,7 @@ footer.integral-footer::before{
       </div>
     </div>
   </div>
-  <button class="help-tour-btn" onclick="toggleHelp();startTour()">
+  <button class="help-tour-btn" onclick="toggleHelp();startTour()" style="display:none">
     <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
     Lancer la visite guidée
   </button>
@@ -1271,10 +1271,10 @@ footer.integral-footer::before{
 <div id="hero">
   <!-- ══ DIAPORAMA PHOTOS ══ -->
   <div class="hero-slideshow">
-<div class="hero-slide active" style="background-image:url('images/photo1.jpg')"></div>
-<div class="hero-slide" style="background-image:url('images/photo2.jpg')"></div>
-<div class="hero-slide" style="background-image:url('images/photo3.jpg')"></div>
-<div class="hero-slide" style="background-image:url('images/photo4.jpg')"></div>
+<div class="hero-slide active" style="background-image:url('https://image2url.com/r2/default/images/1774468839043-c08ae875-6fde-43e9-a342-1f90ca807e07.jpg')"></div>
+<div class="hero-slide" style="background-image:url('https://image2url.com/r2/default/images/1774469638276-ca15efdc-a6f0-4aae-90c0-022964a714b2.jpg')"></div>
+<div class="hero-slide" style="background-image:url('https://image2url.com/r2/default/images/1774469724372-4a6cc9ad-72eb-441b-b379-7567763b5b45.jpg')"></div>
+<div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=700&fit=crop&auto=format')"></div>
   </div>
 
   <div class="hero-bg-pattern"></div>
@@ -1636,7 +1636,7 @@ footer.integral-footer::before{
           </div>
 
           <!-- Formulaire création offre -->
-          <div id="offreForm" style="display:none;background:var(--g4);border:1.5px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;animation:fadeUp .2s ease">
+          <div id="offreForm" style="display:none">
             <h5 style="font-size:.78rem;text-transform:uppercase;letter-spacing:.8px;color:var(--mid);font-weight:700;margin-bottom:16px">✏️ Nouvelle offre</h5>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div class="fg"><label>Titre de l'offre *</label><input id="of-titre" type="text" placeholder="Ex: Pizza du vendredi" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;background:var(--white);color:var(--dark);transition:var(--t)" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--border)'"/></div>
@@ -3053,6 +3053,7 @@ function applyOffreToPopup(offre){
   }
 
   // Réinitialiser sessionStorage pour que le popup réapparaisse
+  sessionStorage.removeItem('offre_seen');
 }
 
 function deleteOffre(id){
@@ -3068,9 +3069,9 @@ function toggleOffreActive(id){
   if(!o) return;
   o.active = !o.active;
   localStorage.setItem('integral_offres', JSON.stringify(adminOffres));
-  if(o.active){ applyOffreToPopup(o); openOffre(); }
+  if(o.active) applyOffreToPopup(o);
   renderOffresList();
-  showToast(o.active ? 'Offre activée — popup affiché ✅' : 'Offre désactivée','gold');
+  showToast(o.active ? 'Offre activée dans le popup ✅' : 'Offre désactivée','gold');
 }
 
 function renderOffresList(){
@@ -3382,15 +3383,11 @@ function renderTourStep(){
   el.scrollIntoView({behavior:'smooth', block:'center', inline:'nearest'});
 }
 
-// Lancer la visite à la 1ère visite (après 3s)
-(function autoTour(){
-  const done = localStorage.getItem('integral_tour_done');
-  if(!done){
-    setTimeout(() => {
-      startTour();
-    }, 3200);
-  }
-})();
+// Visite guidée automatique désactivée
+// (function autoTour(){
+//   const done = localStorage.getItem('integral_tour_done');
+//   if(!done){ setTimeout(() => { startTour(); }, 3200); }
+// })();
 
 
 
@@ -3809,6 +3806,8 @@ document.addEventListener('keydown', e => {
 window.addEventListener('load', () => {
   setTimeout(() => document.getElementById('loader').classList.add('hide'), 1600);
   window.renderMenu();
+  // Popup offre du jour désactivée (masquée)
+  // setTimeout(openOffre, 2500);
   // Init heure ouverture
   updateOpenStatus();
   setInterval(updateOpenStatus, 60000);
@@ -3946,9 +3945,7 @@ function toggleFav(nom, btn){
   } else {
     favorites.push(nom);
     btn.classList.add('liked');
-    btn.classList.remove('liked');
-    void btn.offsetWidth;
-    btn.classList.add('liked');
+    void btn.offsetWidth; // force reflow for animation
   }
   localStorage.setItem('integral_favs', JSON.stringify(favorites));
 }
@@ -3999,6 +3996,9 @@ function closeDishModal(){
 
 // ── 8. OFFRE DU JOUR ─────────────────────────────
 function openOffre(){
+  const seen = sessionStorage.getItem('offre_seen');
+  if(seen) return;
+  sessionStorage.setItem('offre_seen','1');
   document.getElementById('offreModal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -4234,6 +4234,15 @@ function shareOrder(){
       window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
     });
   }
+}
+
+// ══ SERVICE WORKER (PWA) ═════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW enregistré:', reg.scope))
+      .catch(err => console.warn('SW erreur:', err));
+  });
 }
 
 // ── PATCH renderMenu pour badges, favoris, modale ─
